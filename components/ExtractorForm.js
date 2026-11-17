@@ -403,117 +403,87 @@ export default function ExtractorForm() {
   // Submit
   // --------------------------------------------------
 
-  async function handleSubmit(event) {
+ 
+async function handleSubmit(event) {
+  event.preventDefault();
 
-    event.preventDefault();
+  setError('');
+  setRows([]);
+  setStats(null);
 
-    setError('');
+  if (!file) {
+    setError('Please select a TXT file.');
+    return;
+  }
 
-    setRows([]);
+  if (!file.name.toLowerCase().endsWith('.txt')) {
+    setError('Please upload a .txt file.');
+    return;
+  }
 
-    setStats(null);
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('source', source);
 
-    if (!file) {
+  try {
+    setLoading(true);
 
-      setError(
-        'Please select a TXT file.'
-      );
+    const response = await fetch('/api/process', {
+      method: 'POST',
+      body: formData
+    });
 
-      return;
-    }
+    // Read response as text first
+    const responseText = await response.text();
 
-    if (
-      !file.name
-        .toLowerCase()
-        .endsWith('.txt')
-    ) {
-
-      setError(
-        'Please upload a .txt file.'
-      );
-
-      return;
-    }
-
-    const formData =
-      new FormData();
-
-    formData.append(
-      'file',
-      file
-    );
-
-    formData.append(
-      'source',
-      source
-    );
+    let data;
 
     try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error('Non-JSON server response:', responseText);
 
-      setLoading(true);
-
-      const response =
-        await fetch(
-          '/api/process',
-          {
-            method: 'POST',
-            body: formData
-          }
-        );
-
-      const data =
-        await response.json();
-
-      if (!response.ok) {
-
-        throw new Error(
-          data.error ||
-          'Processing failed.'
-        );
-      }
-
-      setRows(
-        data.rows || []
+      throw new Error(
+        `Server returned an invalid response (${response.status}): ${responseText.slice(0, 500)}`
       );
-
-      setStats(
-        data.stats || null
-      );
-
-      setSavedSourceFile(
-        data.savedSourceFile ||
-        generatedTxtName
-      );
-
-      setOutputBaseName(
-        data.baseFileName ||
-        createOutputBaseName(
-          source,
-          file.name
-        )
-      );
-
-      if (
-        !data.rows?.length
-      ) {
-
-        setError(
-          'No articles with an email address were found.'
-        );
-      }
-
-    } catch (err) {
-
-      setError(
-        err.message ||
-        'Something went wrong.'
-      );
-
-    } finally {
-
-      setLoading(false);
     }
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || `Processing failed (${response.status}).`
+      );
+    }
+
+    setRows(data.rows || []);
+    setStats(data.stats || null);
+
+    setSavedSourceFile(
+      data.savedSourceFile || generatedTxtName
+    );
+
+    setOutputBaseName(
+      data.baseFileName ||
+      createOutputBaseName(source, file.name)
+    );
+
+    if (!data.rows?.length) {
+      setError(
+        'No articles with an email address were found.'
+      );
+    }
+
+  } catch (err) {
+    console.error('Upload/processing error:', err);
+
+    setError(
+      err.message || 'Something went wrong.'
+    );
+
+  } finally {
+    setLoading(false);
   }
+}
+
 
   // --------------------------------------------------
   // Download
