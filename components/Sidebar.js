@@ -16,7 +16,7 @@
 //       <div className="brand">
 //         <div className="brand-mark">PE</div>
 //         <div>
-//           <strong>minty publishers Extractor</strong>
+//           <strong>Journals Era Publications Extractor</strong>
 //           <span>TXT processing</span>
 //         </div>
 //       </div>
@@ -71,7 +71,7 @@ export default function Sidebar() {
 
         {!collapsed && (
           <div className="brand-info">
-            <strong>Minty publishers Extractor</strong>
+            <strong>Journals Era Publications</strong>
             <span>Publication Extractor</span>
           </div>
         )}

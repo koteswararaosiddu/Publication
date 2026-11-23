@@ -48,7 +48,7 @@ export default function VerifyOtpPage() {
     <div className="auth-page">
       <div className="auth-card">
 
-        <div className="auth-logo">MP</div>
+        <div className="auth-logo">JE</div>
 
         <h1>Verify your identity</h1>
 
@@ -107,7 +107,7 @@ export default function VerifyOtpPage() {
         </form>
 
         <div className="auth-footer">
-          Secure OTP authentication · Minty Publishers
+          Secure OTP authentication · Journals Era Publications
         </div>
 
       </div>

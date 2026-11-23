@@ -59,7 +59,7 @@ export async function POST(request) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 8 * 60 * 60
+      maxAge: 4 * 60 * 60
     });
 
     // 6. Clear OTP challenge cookie

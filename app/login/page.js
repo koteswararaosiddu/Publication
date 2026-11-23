@@ -47,12 +47,12 @@ export default function LoginPage() {
     <div className="auth-page">
       <div className="auth-card">
 
-        <div className="auth-logo">MP</div>
+        <div className="auth-logo">JE</div>
 
         <h1>Welcome back</h1>
 
         <p className="auth-subtitle">
-          Sign in to your Minty Publishers workspace
+          Sign in to your Journals Era Publications workspace
           and continue extracting publications.
         </p>
 

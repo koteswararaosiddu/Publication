@@ -3,7 +3,7 @@ import './globals.css';
 import AppShell from '@/components/AppShell';
 
 export const metadata = {
-  title: 'minty publishers Extractor',
+  title: 'Journals Era Publications',
   description:
     'Extract publication records with email addresses from TXT files.'
 };
