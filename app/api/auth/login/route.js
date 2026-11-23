@@ -1,99 +1,69 @@
 
 import { NextResponse } from 'next/server';
-import {
-  randomInt,
-  randomUUID,
-  createHash
-} from 'crypto';
+import { randomInt } from 'crypto';
 
 import { validateUser } from '@/lib/users';
-import { saveOtp, deleteOtp } from '@/lib/otp-store';
 import { sendOtpEmail } from '@/lib/mailer';
+import { createOtpChallenge } from '@/lib/otp-challenge';
 
 export const runtime = 'nodejs';
 
-const loginAttempts = new Map();
-
 export async function POST(request) {
   try {
-    const ip = request.headers.get('x-forwarded-for')
-      ?.split(',')[0]?.trim() || 'unknown';
-
-    const now = Date.now();
-    const current = loginAttempts.get(ip);
-
-    if (current && current.resetAt > now && current.count >= 10) {
-      return NextResponse.json(
-        { message: 'Too many login attempts. Try again later.' },
-        { status: 429 }
-      );
-    }
-
-    if (!current || current.resetAt <= now) {
-      loginAttempts.set(ip, {
-        count: 0,
-        resetAt: now + 15 * 60 * 1000
-      });
-    }
-
     const body = await request.json();
+
     const { username, password } = body;
 
     if (
       typeof username !== 'string' ||
       typeof password !== 'string' ||
-      username.length > 100 ||
+      !username.trim() ||
+      !password ||
       password.length > 200
     ) {
       return NextResponse.json(
-        { message: 'Invalid credentials.' },
+        { success: false, message: 'Invalid login details.' },
         { status: 400 }
       );
     }
 
-    const valid = await validateUser(username, password);
+    // 1. Validate configured user
+    const normalizedUsername = username.trim().toLowerCase();
+
+    const valid = await validateUser(
+      normalizedUsername,
+      password
+    );
 
     if (!valid) {
-      loginAttempts.get(ip).count++;
-
       return NextResponse.json(
-        { message: 'Invalid username or password.' },
+        {
+          success: false,
+          message: 'Invalid username or password.'
+        },
         { status: 401 }
       );
     }
 
+    // 2. Generate six-digit OTP
     const otp = String(randomInt(100000, 1000000));
-    const challengeId = randomUUID();
 
-    const otpHash = createHash('sha256')
-      .update(`${challengeId}:${otp}`)
-      .digest('hex');
+    // 3. Send OTP email with username
+    await sendOtpEmail(otp, normalizedUsername);
 
-    saveOtp(challengeId, {
-      username: username.trim(),
-      otpHash
-    });
+    // 4. Create signed OTP challenge
+    const challengeToken = await createOtpChallenge(
+      normalizedUsername,
+      otp
+    );
 
-    try {
-    //   await sendOtpEmail(otp);
-    await sendOtpEmail(otp, username.trim().toLowerCase());
-    } catch (error) {
-      deleteOtp(challengeId);
-
-      console.error('OTP email failed:', error);
-
-      return NextResponse.json(
-        { message: 'Unable to send OTP. Please try again.' },
-        { status: 500 }
-      );
-    }
-
+    // 5. Store challenge in secure HTTP-only cookie
     const response = NextResponse.json({
       success: true,
       message: 'OTP sent to your registered email.'
     });
 
-    response.cookies.set('otp_challenge', challengeId, {
+    response.cookies.set('otp_challenge', challengeToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -104,10 +74,13 @@ export async function POST(request) {
     return response;
 
   } catch (error) {
-    console.error('Login API error:', error);
+    console.error('OTP email failed:', error);
 
     return NextResponse.json(
-      { message: 'Login failed.' },
+      {
+        success: false,
+        message: 'Unable to send OTP. Please try again.'
+      },
       { status: 500 }
     );
   }
