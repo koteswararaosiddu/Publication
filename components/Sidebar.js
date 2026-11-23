@@ -16,7 +16,7 @@
 //       <div className="brand">
 //         <div className="brand-mark">PE</div>
 //         <div>
-//           <strong>Publication Extractor</strong>
+//           <strong>minty publishers Extractor</strong>
 //           <span>TXT processing</span>
 //         </div>
 //       </div>
@@ -50,18 +50,29 @@ const items = [
 export default function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  async function handleLogout() {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      window.location.replace('/login');
+    }
+  }
 
   return (
     <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}>
 
       {/* Brand */}
       <div className="brand">
-        <div className="brand-mark">PE</div>
+        <div className="brand-mark">Minty</div>
 
         {!collapsed && (
           <div className="brand-info">
-            <strong>Publication Extractor</strong>
-            <span>TXT processing</span>
+            <strong>Minty publishers Extractor</strong>
+            <span>Publication Extractor</span>
           </div>
         )}
       </div>
@@ -93,12 +104,27 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      {!collapsed && (
-        <div className="sidebar-footer">
-          <span className="status-dot" />
-          Local processing
-        </div>
-      )}
+     
+{!collapsed && (
+  <div className="sidebar-footer">
+
+    <div className="sidebar-status">
+      <span className="status-dot" />
+      Local processing
+    </div>
+
+    <button
+      type="button"
+      className="sidebar-logout"
+      onClick={handleLogout}
+    >
+      <span className="logout-icon">⇥</span>
+      <span>Sign Out</span>
+    </button>
+
+  </div>
+)}
+
 
       {/* Collapse Arrow */}
       <button
@@ -117,3 +143,4 @@ export default function Sidebar() {
     </aside>
   );
 }
+

@@ -1,19 +1,20 @@
+
 import './globals.css';
-import Sidebar from '@/components/Sidebar';
+import AppShell from '@/components/AppShell';
 
 export const metadata = {
-  title: 'Publication Extractor',
-  description: 'Extract publication records with email addresses from TXT files.'
+  title: 'minty publishers Extractor',
+  description:
+    'Extract publication records with email addresses from TXT files.'
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <div className="app-shell">
-          <Sidebar />
-          <main className="main-content">{children}</main>
-        </div>
+        <AppShell>
+          {children}
+        </AppShell>
       </body>
     </html>
   );

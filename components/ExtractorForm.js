@@ -338,7 +338,7 @@ export default function ExtractorForm() {
     useState('pubmed');
 
   const [format, setFormat] =
-    useState('json');
+    useState('xlsx');
 
   const [rows, setRows] =
     useState([]);
@@ -852,13 +852,11 @@ async function download() {
                   }
                   aria-label="Download format"
                 >
-
+                   <option value="xlsx">
+                    Excel (.xlsx)
+                  </option>
                   <option value="json">
                     JSON
-                  </option>
-
-                  <option value="xlsx">
-                    Excel (.xlsx)
                   </option>
 
                 </select>
