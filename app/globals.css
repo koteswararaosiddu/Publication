@@ -294,7 +294,7 @@
   .content-wrap {
     width: min(1180px, calc(100% - 48px));
     margin: 0 auto;
-    padding: 46px 0 70px;
+    padding: 12px 0 70px;
   }
   
   .page-header {
@@ -1043,4 +1043,21 @@
 
 .logout-icon {
   font-size: 20px;
+}
+.extract-download-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.extract-download-actions select {
+  min-width: 160px;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.extract-download-actions button {
+  min-width: 180px;
 }

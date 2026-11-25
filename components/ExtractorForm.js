@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import ExcelJS from 'exceljs';
+// import ExcelJS from 'exceljs';
+import { upload } from '@vercel/blob/client';
 
 const SOURCES = [
   {
@@ -213,115 +214,115 @@ function downloadBlob(
 //   ].join('\r\n');
 // }
 
-async function downloadExcel(rows,filename) {
-  if (!rows.length) return;
+// async function downloadExcel(rows,filename) {
+//   if (!rows.length) return;
 
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Publications');
+//   const workbook = new ExcelJS.Workbook();
+//   const worksheet = workbook.addWorksheet('Publications');
 
-  const columns = [
-    'article_number',
-    'source',
-    'journal',
-    'title',
-    'author',
-    'author_number',
-    'email',
-    'doi',
-    'pmid',
-    'author_count',
-    'email_count',
-    'authors'
-  ];
+//   const columns = [
+//     'article_number',
+//     'source',
+//     'journal',
+//     'title',
+//     'author',
+//     'author_number',
+//     'email',
+//     'doi',
+//     'pmid',
+//     'author_count',
+//     'email_count',
+//     'authors'
+//   ];
 
-  const widths = {
-    article_number: 14,
-    source: 15,
-    journal: 22,
-    title: 60,
-    author: 30,
-    author_number: 18,
-    email: 42,
-    doi: 35,
-    pmid: 16,
-    author_count: 15,
-    email_count: 15,
-    authors: 65
-  };
+//   const widths = {
+//     article_number: 14,
+//     source: 15,
+//     journal: 22,
+//     title: 60,
+//     author: 30,
+//     author_number: 18,
+//     email: 42,
+//     doi: 35,
+//     pmid: 16,
+//     author_count: 15,
+//     email_count: 15,
+//     authors: 65
+//   };
 
-  worksheet.columns = columns.map(key => ({
-    header: key,
-    key,
-    width: widths[key]
-  }));
+//   worksheet.columns = columns.map(key => ({
+//     header: key,
+//     key,
+//     width: widths[key]
+//   }));
 
-  // Add one row per publication
-  worksheet.addRows(rows);
+//   // Add one row per publication
+//   worksheet.addRows(rows);
 
-  // Yellow header styling
-  const header = worksheet.getRow(1);
-  header.height = 25;
+//   // Yellow header styling
+//   const header = worksheet.getRow(1);
+//   header.height = 25;
 
-  header.eachCell(cell => {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFFFFF00' }
-    };
+//   header.eachCell(cell => {
+//     cell.fill = {
+//       type: 'pattern',
+//       pattern: 'solid',
+//       fgColor: { argb: 'FFFFFF00' }
+//     };
 
-    cell.font = {
-      bold: true,
-      color: { argb: 'FF000000' }
-    };
+//     cell.font = {
+//       bold: true,
+//       color: { argb: 'FF000000' }
+//     };
 
-    cell.alignment = {
-      vertical: 'middle',
-      horizontal: 'center',
-      wrapText: true
-    };
-  });
+//     cell.alignment = {
+//       vertical: 'middle',
+//       horizontal: 'center',
+//       wrapText: true
+//     };
+//   });
 
-  // Wrap all data cells and allow Excel to auto-fit row height
-  worksheet.eachRow((row, rowNumber) => {
-    if (rowNumber === 1) return;
+//   // Wrap all data cells and allow Excel to auto-fit row height
+//   worksheet.eachRow((row, rowNumber) => {
+//     if (rowNumber === 1) return;
 
-    row.eachCell(cell => {
-      cell.alignment = {
-        vertical: 'top',
-        horizontal: 'left',
-        wrapText: true
-      };
-    });
-  });
+//     row.eachCell(cell => {
+//       cell.alignment = {
+//         vertical: 'top',
+//         horizontal: 'left',
+//         wrapText: true
+//       };
+//     });
+//   });
 
-  worksheet.views = [
-    { state: 'frozen', ySplit: 1 }
-  ];
+//   worksheet.views = [
+//     { state: 'frozen', ySplit: 1 }
+//   ];
 
-  worksheet.autoFilter = {
-    from: 'A1',
-    to: `${String.fromCharCode(64 + columns.length)}1`
-  };
+//   worksheet.autoFilter = {
+//     from: 'A1',
+//     to: `${String.fromCharCode(64 + columns.length)}1`
+//   };
 
-  // Generate XLSX file
-  const buffer = await workbook.xlsx.writeBuffer();
+//   // Generate XLSX file
+//   const buffer = await workbook.xlsx.writeBuffer();
 
-  const blob = new Blob([buffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-  });
+//   const blob = new Blob([buffer], {
+//     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+//   });
 
-  const url = URL.createObjectURL(blob);
-const link = document.createElement('a');
+//   const url = URL.createObjectURL(blob);
+// const link = document.createElement('a');
 
-link.href = url;
-link.download = filename;
+// link.href = url;
+// link.download = filename;
 
-document.body.appendChild(link);
-link.click();
-link.remove();
+// document.body.appendChild(link);
+// link.click();
+// link.remove();
 
-URL.revokeObjectURL(url);
-}
+// URL.revokeObjectURL(url);
+// }
 
 
 
@@ -351,12 +352,21 @@ export default function ExtractorForm() {
 
   const [loading, setLoading] =
     useState(false);
+  const [uploadProgress, setUploadProgress] =
+  useState(0);
+
+const [processingStatus, setProcessingStatus] =
+  useState('');
 
   const [savedSourceFile, setSavedSourceFile] =
     useState('');
 
   const [outputBaseName, setOutputBaseName] =
     useState('');
+  const [outputBlobPathname, setOutputBlobPathname] =
+  useState('');
+
+const [totalRows, setTotalRows] = useState(0);
 
   const sourceInfo =
     useMemo(
@@ -382,107 +392,206 @@ export default function ExtractorForm() {
   // --------------------------------------------------
 
   function handleFileChange(event) {
-
-    const selectedFile =
-      event.target.files?.[0] || null;
-
+    const selectedFile = event.target.files?.[0] || null;
+  
     setFile(selectedFile);
-
     setRows([]);
-
     setStats(null);
-
     setError('');
-
     setSavedSourceFile('');
-
     setOutputBaseName('');
+    setOutputBlobPathname('');
+    setTotalRows(0);
+    setUploadProgress(0);
+    setProcessingStatus('');
   }
 
   // --------------------------------------------------
   // Submit
   // --------------------------------------------------
 
- 
-async function handleSubmit(event) {
-  event.preventDefault();
-
-  setError('');
-  setRows([]);
-  setStats(null);
-
-  if (!file) {
-    setError('Please select a TXT file.');
-    return;
-  }
-
-  if (!file.name.toLowerCase().endsWith('.txt')) {
-    setError('Please upload a .txt file.');
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('source', source);
-
-  try {
-    setLoading(true);
-
-    const response = await fetch('/api/process', {
-      method: 'POST',
-      body: formData
-    });
-
-    // Read response as text first
-    const responseText = await response.text();
-
-    let data;
-
+  async function handleSubmit(event) {
+    event.preventDefault();
+  
+    setError('');
+    setRows([]);
+    setStats(null);
+    setOutputBlobPathname('');
+    setTotalRows(0);
+    setUploadProgress(0);
+  
+    if (!file) {
+      setError('Please select a TXT file.');
+      return;
+    }
+  
+    if (!file.name.toLowerCase().endsWith('.txt')) {
+      setError('Please upload a .txt file.');
+      return;
+    }
+  
+    const MAX_SIZE = 80 * 1024 * 1024;
+  
+    if (file.size > MAX_SIZE) {
+      setError('File size must not exceed 80 MB.');
+      return;
+    }
+  
     try {
-      data = JSON.parse(responseText);
-    } catch {
-      console.error('Non-JSON server response:', responseText);
-
-      throw new Error(
-        `Server returned an invalid response (${response.status}): ${responseText.slice(0, 500)}`
+      setLoading(true);
+      setProcessingStatus('Uploading file...');
+  
+      // 1. Upload directly to private Vercel Blob
+      const blob = await upload(
+        `${source}/${safeBaseName(file.name)}.txt`,
+        file,
+        {
+          access: 'private',
+          handleUploadUrl: '/api/blob/upload',
+  
+          onUploadProgress: (event) => {
+            setUploadProgress(Math.round(event.percentage));
+          }
+        }
       );
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        data.error || `Processing failed (${response.status}).`
+  
+      setProcessingStatus('Upload completed. Processing publications...');
+  
+      // 2. Send Blob URL to processing API
+      const response = await fetch('/api/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          blobUrl: blob.url,
+          source,
+          originalFileName: file.name
+        })
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(data.error || 'Processing failed.');
+      }
+  
+      // 3. Store preview and complete-result metadata
+      setRows(data.rows || []);
+      setStats(data.stats || null);
+  
+      setTotalRows(
+        data.totalRows || data.stats?.records || data.rows?.length || 0
       );
-    }
-
-    setRows(data.rows || []);
-    setStats(data.stats || null);
-
-    setSavedSourceFile(
-      data.savedSourceFile || generatedTxtName
-    );
-
-    setOutputBaseName(
-      data.baseFileName ||
-      createOutputBaseName(source, file.name)
-    );
-
-    if (!data.rows?.length) {
-      setError(
-        'No articles with an email address were found.'
+  
+      setSavedSourceFile(
+        data.savedSourceFile || generatedTxtName
       );
+  
+      setOutputBaseName(
+        data.baseFileName ||
+        createOutputBaseName(source, file.name)
+      );
+  
+      setOutputBlobPathname(
+        data.outputBlobPathname || ''
+      );
+  
+      setProcessingStatus('');
+  
+      if (!data.rows?.length) {
+        setError('No articles with an email address were found.');
+      }
+  
+    } catch (err) {
+      console.error('Upload/processing error:', err);
+  
+      setError(err.message || 'Something went wrong.');
+      setProcessingStatus('');
+  
+    } finally {
+      setLoading(false);
     }
-
-  } catch (err) {
-    console.error('Upload/processing error:', err);
-
-    setError(
-      err.message || 'Something went wrong.'
-    );
-
-  } finally {
-    setLoading(false);
   }
-}
+// async function handleSubmit(event) {
+//   event.preventDefault();
+
+//   setError('');
+//   setRows([]);
+//   setStats(null);
+
+//   if (!file) {
+//     setError('Please select a TXT file.');
+//     return;
+//   }
+
+//   if (!file.name.toLowerCase().endsWith('.txt')) {
+//     setError('Please upload a .txt file.');
+//     return;
+//   }
+
+//   const formData = new FormData();
+//   formData.append('file', file);
+//   formData.append('source', source);
+
+//   try {
+//     setLoading(true);
+
+//     const response = await fetch('/api/process', {
+//       method: 'POST',
+//       body: formData
+//     });
+
+//     // Read response as text first
+//     const responseText = await response.text();
+
+//     let data;
+
+//     try {
+//       data = JSON.parse(responseText);
+//     } catch {
+//       console.error('Non-JSON server response:', responseText);
+
+//       throw new Error(
+//         `Server returned an invalid response (${response.status}): ${responseText.slice(0, 500)}`
+//       );
+//     }
+
+//     if (!response.ok) {
+//       throw new Error(
+//         data.error || `Processing failed (${response.status}).`
+//       );
+//     }
+
+//     setRows(data.rows || []);
+//     setStats(data.stats || null);
+
+//     setSavedSourceFile(
+//       data.savedSourceFile || generatedTxtName
+//     );
+
+//     setOutputBaseName(
+//       data.baseFileName ||
+//       createOutputBaseName(source, file.name)
+//     );
+
+//     if (!data.rows?.length) {
+//       setError(
+//         'No articles with an email address were found.'
+//       );
+//     }
+
+//   } catch (err) {
+//     console.error('Upload/processing error:', err);
+
+//     setError(
+//       err.message || 'Something went wrong.'
+//     );
+
+//   } finally {
+//     setLoading(false);
+//   }
+// }
 
 
   // --------------------------------------------------
@@ -490,77 +599,120 @@ async function handleSubmit(event) {
   // --------------------------------------------------
 
   
-async function download() {
-  if (!rows.length) return;
-
-  const base =
-    outputBaseName ||
-    createOutputBaseName(source, file?.name);
-
-  let filename;
-
-  try {
-    if (format === 'json') {
-      filename = `${base}.json`;
-
-      const content = JSON.stringify(
-        {
-          source,
-          original_file: file?.name || '',
-          saved_source_file: savedSourceFile || '',
-          total_records: rows.length,
-          records: rows
-        },
-        null,
-        2
-      );
-
-      downloadBlob(
-        content,
-        filename,
-        'application/json;charset=utf-8'
-      );
-
-    } else if (format === 'xlsx') {
-      filename = `${base}.xlsx`;
-
-      await downloadExcel(rows, filename);
-    }
-
-    // Save download history
+  async function download() {
+    if (!rows.length) return;
+  
+    const base =
+      outputBaseName ||
+      createOutputBaseName(source, file?.name);
+  
+    let filename;
+  
     try {
-      const existing = JSON.parse(
-        localStorage.getItem(HISTORY_KEY) || '[]'
-      );
-
-      const next = [
-        {
-          id: crypto.randomUUID?.() || `${Date.now()}`,
-          source,
-          sourceLabel: sourceInfo?.label || source,
-          outputFile: filename,
-          originalFile: file?.name || '',
-          savedSourceFile: savedSourceFile || generatedTxtName,
-          records: rows.length,
-          format,
-          createdAt: new Date().toLocaleString()
-        },
-        ...existing
-      ].slice(0, 50);
-
-      localStorage.setItem(
-        HISTORY_KEY,
-        JSON.stringify(next)
-      );
-    } catch {
-      // History must never block download
+      if (format === 'json') {
+        // JSON contains the 50-row preview only
+        filename = `${base}.json`;
+  
+        const content = JSON.stringify(
+          {
+            source,
+            original_file: file?.name || '',
+            saved_source_file: savedSourceFile || '',
+            total_records: totalRows,
+            preview_records: rows.length,
+            records: rows
+          },
+          null,
+          2
+        );
+  
+        downloadBlob(
+          content,
+          filename,
+          'application/json;charset=utf-8'
+        );
+  
+      } else if (format === 'xlsx') {
+        // Download complete Excel file from private Blob
+        if (!outputBlobPathname) {
+          throw new Error('Excel file is not available. Please process again.');
+        }
+  
+        filename = `${base}.xlsx`;
+  
+        const response = await fetch('/api/download', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            pathname: outputBlobPathname
+          })
+        });
+  
+        if (!response.ok) {
+          const errorText = await response.text();
+        
+          console.error("Download API status:", response.status);
+          console.error("Download API response:", errorText);
+          console.error("Requested pathname:", outputBlobPathname);
+        
+          throw new Error(
+            `Download failed (${response.status}): ${errorText}`
+          );
+        }
+        
+  
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+  
+        const link = document.createElement('a');
+  
+        link.href = url;
+        link.download = filename;
+  
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+  
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+  
+      // Save download history
+      try {
+        const existing = JSON.parse(
+          localStorage.getItem(HISTORY_KEY) || '[]'
+        );
+  
+        const next = [
+          {
+            id: crypto.randomUUID?.() || `${Date.now()}`,
+            source,
+            sourceLabel: sourceInfo?.label || source,
+            outputFile: filename,
+            originalFile: file?.name || '',
+            savedSourceFile: savedSourceFile || generatedTxtName,
+            records: totalRows,
+            format,
+            createdAt: new Date().toLocaleString()
+          },
+          ...existing
+        ].slice(0, 50);
+  
+        localStorage.setItem(
+          HISTORY_KEY,
+          JSON.stringify(next)
+        );
+  
+      } catch {
+        // History must never block download
+      }
+  
+    } catch (err) {
+      console.error('Download error:', err);
+      setError(`Download failed: ${err.message}`);
     }
-
-  } catch (err) {
-    console.error('Download error:', err);
-    setError(`Download failed: ${err.message}`);
   }
-}
 
 
   // --------------------------------------------------
@@ -703,18 +855,56 @@ async function download() {
         {/* ----------------------------------------- */}
         {/* Submit */}
         {/* ----------------------------------------- */}
+        {loading ? (
+  <button
+    className="primary"
+    disabled
+    type="button"
+  >
+    Processing...
+  </button>
+) : rows.length > 0 ? (
+  <div className="extract-download-actions">
 
-        <button
-          className="primary"
-          disabled={loading}
-          type="submit"
-        >
+    <select
+      value={format}
+      onChange={(e) => setFormat(e.target.value)}
+      aria-label="Download format"
+    >
+      <option value="xlsx">Excel (.xlsx)</option>
+      <option value="json">JSON (Preview)</option>
+    </select>
 
-          {loading
-            ? 'Processing…'
-            : 'Submit & Extract'}
+    <button
+      className="download"
+      type="button"
+      onClick={download}
+    >
+      Download {format.toUpperCase()}
+    </button>
 
-        </button>
+  </div>
+) : (
+  <button
+    className="primary"
+    type="submit"
+  >
+    Submit & Extract
+  </button>
+)}
+        {loading && (
+  <div className="upload-progress">
+    <p>{processingStatus}</p>
+
+    <progress
+      value={uploadProgress}
+      max="100"
+      style={{ width: '100%' }}
+    />
+
+    <p>{uploadProgress}% uploaded</p>
+  </div>
+)}
 
       </form>
 
@@ -808,9 +998,9 @@ async function download() {
 
                   <p>
 
-                    {rows.length}
-                    {' '}
-                    email record(s) ready
+                  {totalRows}
+{' '}
+email record(s) ready
                     {' · '}
 
                     source saved as{' '}
@@ -842,7 +1032,7 @@ async function download() {
 
                 </div>
 
-                <select
+                {/* <select
                   value={format}
                   onChange={
                     e =>
@@ -859,11 +1049,11 @@ async function download() {
                     JSON
                   </option>
 
-                </select>
+                </select> */}
 
               </div>
 
-              <button
+              {/* <button
                 className="download"
                 type="button"
                 onClick={download}
@@ -872,7 +1062,7 @@ async function download() {
                 Download{' '}
                 {format.toUpperCase()}
 
-              </button>
+              </button> */}
 
               {/* ----------------------------------- */}
               {/* Table */}
@@ -983,21 +1173,13 @@ async function download() {
 
               </div>
 
-              {rows.length > 50 && (
-
-                <p className="hint">
-
-                  Preview shows the first
-                  50 records. The download
-                  contains all{' '}
-
-                  {rows.length}
-
-                  {' '}records.
-
-                </p>
-
-              )}
+              {totalRows > 50 && (
+  <p className="hint">
+    Preview shows the first 50 records.
+    The Excel download contains all{' '}
+    {totalRows} records.
+  </p>
+)}
 
             </>
 
