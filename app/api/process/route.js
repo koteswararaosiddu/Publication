@@ -227,19 +227,25 @@ export async function POST(request) {
       };
     });
 
+
     // 10. Data formatting
 
-    worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return;
+worksheet.eachRow((row, rowNumber) => {
+  if (rowNumber === 1) return;
 
-      row.eachCell(cell => {
-        cell.alignment = {
-          vertical: 'top',
-          horizontal: 'left',
-          wrapText: true
-        };
-      });
-    });
+  row.eachCell(cell => {
+    cell.alignment = {
+      vertical: 'top',
+      horizontal: 'left',
+      wrapText: true,
+      shrinkToFit: false
+    };
+  });
+
+  // Let ExcelJS calculate row height based on wrapped content
+  row.height = 35;
+});
+
 
     // 11. Freeze header
 
